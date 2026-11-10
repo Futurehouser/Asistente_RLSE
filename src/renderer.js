@@ -64,14 +64,32 @@
     '- Accounting Closing SHKD Tests: (Only if previous question applies - Describe briefly)',
   ].join('\n');
 
+  const TEMPLATE_JUSTIFICATION = [
+    '- Reason? [Project|Incident Fix|Vulnerability|Regulatory|Regulatory Compliance|BAU] :',
+    '',
+    '[INPUT 1]',
+    '',
+    '- Business Rationale for the Change? (Why?, Value added?, etc...):',
+    '',
+    '[INPUT 2]',
+    '',
+    '- Impact of not carrying out the change?: En caso de error humano  los jobs por ejecutar se pueden lanzar de manera manual, los nuevos no tienen peso operativo.',
+    'Examples:',
+    'i.e.: Regulatory date is the 15/10/2022, if not in prod by them we will be breaching an Industry Regulation',
+    'i.e.: Certificate expires on the 13/10/2022, if not implemented by them payments journey will be affected',
+  ].join('\n');
+
   const input1 = document.getElementById('input1');
   const input2 = document.getElementById('input2');
   const output = document.getElementById('output');
 
+  const output2 = document.getElementById('output2');
+  const fill = (tpl) =>
+    tpl.replace('[INPUT 1]', () => input1.value).replace('[INPUT 2]', () => input2.value);
+
   document.getElementById('generateBtn').addEventListener('click', () => {
-    output.value = TEMPLATE
-      .replace('[INPUT 1]', () => input1.value)
-      .replace('[INPUT 2]', () => input2.value);
+    output.value = fill(TEMPLATE);
+    output2.value = fill(TEMPLATE_JUSTIFICATION);
   });
 
   async function copyText(text, btn) {
@@ -92,6 +110,10 @@
   const copyBtn = document.getElementById('copyBtn');
   copyBtn.addEventListener('click', () => {
     if (output.value) copyText(output.value, copyBtn);
+  });
+  const copyBtn2 = document.getElementById('copyBtn2');
+  copyBtn2.addEventListener('click', () => {
+    if (output2.value) copyText(output2.value, copyBtn2);
   });
 
   // ---------- Fechas de despliegue ----------
