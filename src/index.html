@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>Asistente deploy RLSE Aquaplus</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme-init.js"></script>
+</head>
+<body>
+  <button id="themeToggle" class="theme-toggle" title="Cambiar modo día / noche" aria-label="Cambiar modo día / noche"></button>
+
+  <div id="updateBanner" class="update-banner" hidden>
+    <span id="updateText"></span>
+    <button id="updateBtn" class="btn btn-small">Actualizar ahora</button>
+  </div>
+
+  <main class="container">
+    <h1 class="title">Asistente deploy RLSE Aquaplus</h1>
+
+    <section class="step" data-step="1">
+      <div class="step-header"><span class="step-num">1</span><h2>Clonar plantilla</h2></div>
+      <div class="row">
+        <span class="label">Clona esta RLSE: </span>
+        <a href="https://www.google.com/" target="_blank" rel="noopener">Plantilla RLSE</a>
+      </div>
+    </section>
+
+    <section class="step" data-step="2">
+      <div class="step-header"><span class="step-num">2</span><h2>Descripción de la RLSE</h2></div>
+      <div class="row">
+        <label class="label" for="input1">Descripción resumida de alto nivel de la RLSE: </label>
+        <textarea id="input1" rows="3"></textarea>
+      </div>
+      <div class="row">
+        <label class="label" for="input2">Lista de HUs: </label>
+        <textarea id="input2" rows="3"></textarea>
+      </div>
+      <div class="actions">
+        <button id="generateBtn" class="btn">Generar descripción</button>
+      </div>
+      <div class="output-wrap">
+        <textarea id="output" rows="12" readonly placeholder="Aquí aparecerá la descripción generada"></textarea>
+        <button id="copyBtn" class="btn btn-small btn-ghost copy-btn">Copiar</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="step-nav">
+    <button id="prevBtn" class="btn">&larr; Paso previo</button>
+    <span id="stepIndicator" class="step-indicator"></span>
+    <button id="nextBtn" class="btn">Paso siguiente &rarr;</button>
+  </nav>
+
+  <div id="version" class="version"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

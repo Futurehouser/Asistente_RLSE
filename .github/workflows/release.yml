@@ -1,0 +1,57 @@
+name: Build & Release
+
+# Publica una nueva versión cada vez que se sube a main un package.json con
+# una versión que todavía no tiene release (o manualmente desde la pestaña Actions).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leer versión
+        id: ver
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "La release v$VERSION ya existe; no se publica nada."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        if: steps.ver.outputs.exists == 'false'
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        if: steps.ver.outputs.exists == 'false'
+        run: npm ci
+
+      - name: Construir ejecutable portable
+        if: steps.ver.outputs.exists == 'false'
+        run: npm run dist
+
+      - name: Publicar release
+        if: steps.ver.outputs.exists == 'false'
+        shell: bash
+        run: |
+          gh release create "v${{ steps.ver.outputs.version }}" \
+            "dist/Asistente_RLSE.exe" \
+            --title "v${{ steps.ver.outputs.version }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
