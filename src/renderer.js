@@ -20,11 +20,49 @@
   showStep(0, false);
 
   // ---------- Generar descripción ----------
-  const TEMPLATE =
-    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library in London, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. \n\n" +
-    '[INPUT 1]\n\n' +
-    'It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software like Aldus PageMaker and Microsoft Word including versions of Lorem Ipsum.\n\n' +
-    '[INPUT 2] ';
+  const TEMPLATE = [
+    '- High Level & Non-Technical Language Description Summary:',
+    '',
+    '[INPUT 1]',
+    '',
+    '- What BENEFIT will this change bring?:',
+    '',
+    'Historias de usuario de Jira:',
+    '',
+    '[INPUT 2]',
+    '',
+    'Adaptación de mallas para las ingestas nuevas: fase2',
+    '',
+    '- Services/Workstreams/Channels Impacted?: Aquaplus',
+    '',
+    '- Technologies Involved in the Change?: Control- M',
+    '',
+    '- Has this Type of Change been done before? [YES|NO]: YES',
+    '',
+    '- Have previous Deployments resulted in any issues? [YES|NO] (If YES explain what happened): NO',
+    '',
+    "- Any Dependencies with other Changes or it's Self-Contained? (If Dependencies, please add the Change Tickets ):NO",
+    '',
+    '- Impact on Live Service expected? [YES|NO] (If YES, provide Impact Statement): NO',
+    '',
+    '- Are we introducing a New Service or moving to New Infrastructure? [YES|NO] (If YES, has PFP (Permit For PRO) been achieved?): NO',
+    '',
+    '- Is the deployment time window critical? [YES|NO] (If YES, what is the exact time window? That window should include deployment, testing and backout activities ): NO',
+    '',
+    '- Any impact on Communications? [YES|NO]: NO',
+    '',
+    '- Any impact on Desktops? [YES|NO]: NO',
+    '',
+    '- Impacted Countries: Global España',
+    '',
+    '- Affects the DAILY Accounting Closing? [YES|NO]: NO',
+    '',
+    '- Affects the MONTHLY Accounting Closing? [YES|NO] : NO',
+    '',
+    '- Accounting Closing SHKD Contacts: (Only if 2 previous questions apply - MANDATORY to inform Name, Surname and Mobile Phone)',
+    '',
+    '- Accounting Closing SHKD Tests: (Only if previous question applies - Describe briefly)',
+  ].join('\n');
 
   const input1 = document.getElementById('input1');
   const input2 = document.getElementById('input2');

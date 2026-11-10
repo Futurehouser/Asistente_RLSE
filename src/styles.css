@@ -119,6 +119,18 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-col
 
 .actions { margin: 6px 0 14px; }
 
+.hint { margin: 4px 0 10px; font-weight: 500; }
+
+.guide-img {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 6px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 .output-wrap { position: relative; }
 .output-wrap textarea { min-height: 200px; padding-right: 90px; }
 .copy-btn { position: absolute; top: 8px; right: 8px; }
