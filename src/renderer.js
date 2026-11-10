@@ -265,6 +265,45 @@
     });
   });
 
+  // ---------- Email a Blanca ----------
+  const TEMPLATE_EMAIL = [
+    'Buenos días Blanca',
+    '',
+    'Solicitamos tu conformidad para desplegar la RLSE [RLSE CODE] para subir los desarrollos vinculados con las siguientes HU:',
+    '',
+    '[INPUT HUS]',
+    '',
+    'Se adjunta plan de pruebas.',
+    '',
+    'Muchas gracias,',
+    '',
+    '',
+    'Saludos.',
+  ].join('\n');
+
+  const rlseCode = document.getElementById('rlseCode');
+  const emailOut = document.getElementById('emailOut');
+  const emailSubject = document.getElementById('emailSubject');
+  const emailBody = document.getElementById('emailBody');
+
+  document.getElementById('emailBtn').addEventListener('click', () => {
+    const code = rlseCode.value.trim();
+    if (!code) {
+      rlseCode.focus();
+      return;
+    }
+    emailSubject.value = `[Aquaplus] RLSE ${code}`;
+    emailBody.value = TEMPLATE_EMAIL
+      .replace('[RLSE CODE]', () => code)
+      .replace('[INPUT HUS]', () => input2.value);
+    emailOut.hidden = false;
+  });
+
+  const copySubject = document.getElementById('copySubject');
+  copySubject.addEventListener('click', () => copyText(emailSubject.value, copySubject));
+  const copyBody = document.getElementById('copyBody');
+  copyBody.addEventListener('click', () => copyText(emailBody.value, copyBody));
+
   // ---------- Modo día / noche ----------
   const root = document.documentElement;
   const themeBtn = document.getElementById('themeToggle');

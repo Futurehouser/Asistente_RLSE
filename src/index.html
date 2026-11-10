@@ -87,6 +87,28 @@
       <div class="step-header"><span class="step-num">6</span><h2>GitHub: Cierre de versión</h2></div>
       <p class="step-text">Finalmente cerramos versión, usando el workflow de GitHub actions llamado 'Release workflow' y seleccionar la rama 'main'.</p>
     </section>
+
+    <section class="step" data-step="7">
+      <div class="step-header"><span class="step-num">7</span><h2>Email a Blanca</h2></div>
+      <label class="block-label" for="rlseCode">Código de la RLSE</label>
+      <div class="date-row">
+        <input type="text" id="rlseCode" class="text-input" placeholder="RLSE1234567" />
+        <button id="emailBtn" class="btn">Generar email</button>
+      </div>
+      <div id="emailOut" hidden>
+        <p class="hint">Título del email: </p>
+        <div class="output-wrap output-short">
+          <textarea id="emailSubject" rows="1" readonly></textarea>
+          <button id="copySubject" class="btn btn-small btn-ghost copy-btn">Copiar</button>
+        </div>
+        <p class="hint hint-spaced">Contenido del email: </p>
+        <div class="output-wrap">
+          <textarea id="emailBody" rows="12" readonly></textarea>
+          <button id="copyBody" class="btn btn-small btn-ghost copy-btn">Copiar</button>
+        </div>
+        <p class="hint hint-spaced">Adjunta el Word del plan de pruebas a este email antes de enviárselo a Blanca</p>
+      </div>
+    </section>
   </main>
 
   <nav class="step-nav">

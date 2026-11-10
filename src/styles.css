@@ -172,6 +172,7 @@ input[type="date"], .date-cell, .text-input {
 .date-cell { flex: 0 1 220px; font-family: Consolas, "Courier New", monospace; cursor: pointer; }
 
 .output-wrap { position: relative; }
+.output-wrap.output-short textarea { min-height: 0; height: auto; resize: none; padding-top: 10px; padding-bottom: 10px; }
 .output-wrap textarea { min-height: 200px; padding-right: 90px; }
 .copy-btn { position: absolute; top: 8px; right: 8px; }
 
