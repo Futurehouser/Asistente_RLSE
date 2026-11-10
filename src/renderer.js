@@ -74,17 +74,24 @@
       .replace('[INPUT 2]', () => input2.value);
   });
 
-  const copyBtn = document.getElementById('copyBtn');
-  copyBtn.addEventListener('click', async () => {
-    if (!output.value) return;
+  async function copyText(text, btn) {
     try {
-      await navigator.clipboard.writeText(output.value);
+      await navigator.clipboard.writeText(text);
     } catch {
-      output.select();
+      const tmp = document.createElement('textarea');
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
       document.execCommand('copy');
+      tmp.remove();
     }
-    copyBtn.textContent = '¡Copiado!';
-    setTimeout(() => (copyBtn.textContent = 'Copiar'), 1500);
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => (btn.textContent = 'Copiar'), 1500);
+  }
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', () => {
+    if (output.value) copyText(output.value, copyBtn);
   });
 
   // ---------- Fechas de despliegue ----------
@@ -127,7 +134,11 @@
       cell.value = value;
       cell.title = 'Clic para seleccionar';
       cell.addEventListener('focus', () => cell.select());
-      row.append(label, cell);
+      const copy = document.createElement('button');
+      copy.className = 'btn btn-small btn-ghost';
+      copy.textContent = 'Copiar';
+      copy.addEventListener('click', () => copyText(value, copy));
+      row.append(label, cell, copy);
       datesOut.appendChild(row);
     });
   });

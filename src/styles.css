@@ -146,6 +146,8 @@ input[type="date"], .date-cell {
 :root[data-theme="dark"] input[type="date"] { color-scheme: dark; }
 
 .dates-out .row { align-items: center; margin-bottom: 8px; }
+.dates-out .btn { min-width: 86px; }
+@media (max-width: 700px) { .dates-out .row { flex-direction: row; flex-wrap: wrap; } .dates-out .row .label { flex-basis: 100%; } }
 .dates-out .row .label { padding-top: 0; }
 .date-cell { flex: 0 1 220px; font-family: Consolas, "Courier New", monospace; cursor: pointer; }
 
