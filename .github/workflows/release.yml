@@ -45,12 +45,17 @@ jobs:
         if: steps.ver.outputs.exists == 'false'
         run: npm run dist
 
+      - name: Construir versión Python (archivo único)
+        if: steps.ver.outputs.exists == 'false'
+        run: python python/build_single.py
+
       - name: Publicar release
         if: steps.ver.outputs.exists == 'false'
         shell: bash
         run: |
           gh release create "v${{ steps.ver.outputs.version }}" \
             "dist/Asistente_RLSE.exe" \
+            "dist/Asistente_RLSE.py" \
             --title "v${{ steps.ver.outputs.version }}" \
             --generate-notes
         env:
