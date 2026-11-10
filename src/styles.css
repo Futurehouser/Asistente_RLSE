@@ -131,6 +131,24 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-col
   border-radius: 6px;
 }
 
+.block-label { display: block; font-weight: 500; margin-bottom: 8px; }
+.date-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+
+input[type="date"], .date-cell {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color-scheme: light;
+}
+:root[data-theme="dark"] input[type="date"] { color-scheme: dark; }
+
+.dates-out .row { align-items: center; margin-bottom: 8px; }
+.dates-out .row .label { padding-top: 0; }
+.date-cell { flex: 0 1 220px; font-family: Consolas, "Courier New", monospace; cursor: pointer; }
+
 .output-wrap { position: relative; }
 .output-wrap textarea { min-height: 200px; padding-right: 90px; }
 .copy-btn { position: absolute; top: 8px; right: 8px; }

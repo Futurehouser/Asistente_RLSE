@@ -87,6 +87,51 @@
     setTimeout(() => (copyBtn.textContent = 'Copiar'), 1500);
   });
 
+  // ---------- Fechas de despliegue ----------
+  // [título, días respecto a la fecha de PRO, hora]
+  const DATE_PLAN = [
+    ['Fecha de inicio de despliegue a PRE', -2, '13:00:00'],
+    ['Fecha de fin de despliegue a PRE', -2, '23:59:59'],
+    ['Fecha de inicio del despliegue a PRO', 0, '09:00:00'],
+    ['Fecha de fin del despliegue a PRO', 0, '23:59:59'],
+    ['Fecha de inicio de Shakedown Técnico', 1, '09:00:00'],
+    ['Fecha de fin de Shakedown Técnico', 1, '23:59:59'],
+    ['Fecha de inicio de Shakedown Funcional', 2, '09:00:00'],
+    ['Fecha de fin de Shakedown Funcional', 2, '23:59:59'],
+    ['Fecha de inicio del Rollback', 0, '09:30:00'],
+    ['Fecha de fin del Rollback', 0, '23:59:59'],
+  ];
+
+  const deployDate = document.getElementById('deployDate');
+  const datesOut = document.getElementById('datesOut');
+  const pad = (n) => String(n).padStart(2, '0');
+
+  document.getElementById('datesBtn').addEventListener('click', () => {
+    datesOut.innerHTML = '';
+    if (!deployDate.value) {
+      deployDate.focus();
+      return;
+    }
+    const [y, m, d] = deployDate.value.split('-').map(Number);
+    DATE_PLAN.forEach(([title, offset, time]) => {
+      const dt = new Date(y, m - 1, d + offset); // fecha local: gestiona cambios de mes/año
+      const value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${time}`;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = title;
+      const cell = document.createElement('input');
+      cell.className = 'date-cell';
+      cell.readOnly = true;
+      cell.value = value;
+      cell.title = 'Clic para seleccionar';
+      cell.addEventListener('focus', () => cell.select());
+      row.append(label, cell);
+      datesOut.appendChild(row);
+    });
+  });
+
   // ---------- Modo día / noche ----------
   const root = document.documentElement;
   const themeBtn = document.getElementById('themeToggle');
