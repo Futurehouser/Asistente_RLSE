@@ -5,4 +5,5 @@ contextBridge.exposeInMainWorld('api', {
   onUpdateAvailable: (cb) => ipcRenderer.on('update-available', (_e, info) => cb(info)),
   onUpdateProgress: (cb) => ipcRenderer.on('update-progress', (_e, pct) => cb(pct)),
   installUpdate: () => ipcRenderer.invoke('install-update'),
+  copyRich: (html, text) => ipcRenderer.invoke('copy-rich', html, text),
 });

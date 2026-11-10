@@ -137,6 +137,21 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-col
 .date-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
 
 .text-input { width: 100%; max-width: 420px; }
+.text-input.wide { max-width: none; flex: 1; }
+.error-msg { color: #d64545; font-weight: 600; margin: 0 0 10px; }
+
+.rich-output {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 90px 10px 12px;
+  min-height: 200px;
+  line-height: 1.45;
+}
+.rich-output p { margin: 0 0 12px; }
+.rich-output ul { margin: 0 0 12px; padding-left: 26px; }
+.rich-output a { color: var(--accent); }
 
 input[type="date"], .date-cell, .text-input {
   background: var(--input-bg);

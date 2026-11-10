@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, clipboard } = require('electron');
 const path = require('path');
 const updater = require('./updater');
 
@@ -39,6 +39,14 @@ function createWindow() {
     if (info) win.webContents.send('update-available', info);
   });
 }
+
+// Copia HTML + texto plano a la vez (para pegar en Outlook con hipervínculos)
+ipcMain.handle('copy-rich', (_e, html, text) => {
+  // Acentos como entidades HTML para que se peguen bien en cualquier programa
+  const safeHtml = String(html).replace(/[^\x00-\x7f]/gu, (ch) => `&#${ch.codePointAt(0)};`);
+  clipboard.write({ html: safeHtml, text: String(text) });
+  return true;
+});
 
 ipcMain.handle('install-update', async () => {
   return updater.downloadAndInstall((pct) => {

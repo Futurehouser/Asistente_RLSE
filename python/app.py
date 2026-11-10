@@ -130,6 +130,11 @@ TEMPLATE_EMAIL = '\n'.join([
     'Saludos.',
 ])
 
+WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+          'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+CHANGE_GROUP = '> SGT_AP_SCIB_AQUAPLUS N1'
+
 # (título, días respecto a la fecha de PRO, hora, indicación, extras)
 DATE_PLAN = [
     ('Fecha de inicio de despliegue a PRE', -2, '13:00:00',
@@ -181,6 +186,64 @@ def is_newer(remote, local):
     a, b = parse_version(remote), parse_version(local)
     n = max(len(a), len(b))
     return a + [0] * (n - len(a)) > b + [0] * (n - len(b))
+
+
+def html_escape(s):
+    return (str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            .replace('"', '&quot;').replace("'", '&#39;'))
+
+
+def copy_html_windows(html, text):
+    """Copia HTML (formato 'HTML Format') + texto plano al portapapeles de Windows.
+    Devuelve False si no se puede (otro sistema operativo o error)."""
+    if sys.platform != 'win32':
+        return False
+    # Acentos como entidades HTML: se pegan bien lo lea el programa como UTF-8 o como ANSI
+    html = html.encode('ascii', 'xmlcharrefreplace').decode('ascii')
+    import ctypes
+    from ctypes import wintypes
+    user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32
+    user32.OpenClipboard.argtypes = [wintypes.HWND]
+    user32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
+    user32.SetClipboardData.restype = wintypes.HANDLE
+    user32.RegisterClipboardFormatW.argtypes = [wintypes.LPCWSTR]
+    user32.RegisterClipboardFormatW.restype = wintypes.UINT
+    kernel32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+    kernel32.GlobalAlloc.restype = wintypes.HGLOBAL
+    kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+    kernel32.GlobalLock.restype = ctypes.c_void_p
+    kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+
+    def put(fmt, data):
+        h = kernel32.GlobalAlloc(0x0002, len(data))  # GMEM_MOVEABLE
+        p = kernel32.GlobalLock(h)
+        ctypes.memmove(p, data, len(data))
+        kernel32.GlobalUnlock(h)
+        user32.SetClipboardData(fmt, h)
+
+    # Cabecera CF_HTML con offsets en bytes
+    header = ('Version:0.9\r\nStartHTML:{:010d}\r\nEndHTML:{:010d}\r\n'
+              'StartFragment:{:010d}\r\nEndFragment:{:010d}\r\n')
+    pre = '<html><body><!--StartFragment-->'
+    post = '<!--EndFragment--></body></html>'
+    head_len = len(header.format(0, 0, 0, 0).encode('utf-8'))
+    start_html = head_len
+    start_frag = start_html + len(pre.encode('utf-8'))
+    end_frag = start_frag + len(html.encode('utf-8'))
+    end_html = end_frag + len(post.encode('utf-8'))
+    cf_html = (header.format(start_html, end_html, start_frag, end_frag) + pre + html + post).encode('utf-8') + b'\0'
+    try:
+        if not user32.OpenClipboard(None):
+            return False
+        try:
+            user32.EmptyClipboard()
+            put(user32.RegisterClipboardFormatW('HTML Format'), cf_html)
+            put(13, (text + '\0').encode('utf-16-le'))  # CF_UNICODETEXT
+        finally:
+            user32.CloseClipboard()
+        return True
+    except Exception:
+        return False
 
 
 def load_settings():
@@ -506,6 +569,7 @@ class App:
                              "Finalmente cerramos versión, usando el workflow de GitHub actions llamado "
                              "'Release workflow' y seleccionar la rama 'main'.")
         self.build_step7()
+        self.build_step8()
         self.reg(tk.Frame(self.content, height=30), 'bg').pack()
 
     def build_step1(self):
@@ -685,6 +749,122 @@ class App:
         hus = self.input2.get('1.0', 'end-1c')
         self.set_output(self.out_body, TEMPLATE_EMAIL.replace('[RLSE CODE]', code, 1).replace('[INPUT HUS]', hus, 1))
         self.email_out.pack(fill='x')
+
+    def build_step8(self):
+        body = self.new_step(8, 'Email a gestión del cambio')
+        grid = self.reg(tk.Frame(body), 'surface')
+        grid.pack(fill='x')
+        grid.columnconfigure(1, weight=1)
+        self.label(grid, 'URL de la RLSE: ', font=FONT_BOLD).grid(row=0, column=0, sticky='w', padx=(0, 12), pady=(0, 10))
+        self.rlse_url = self.entry(grid)
+        self.rlse_url.grid(row=0, column=1, sticky='ew', pady=(0, 10), ipady=5)
+        self.label(grid, 'URL de la Task del deploy a PRO: ', font=FONT_BOLD).grid(row=1, column=0, sticky='w', padx=(0, 12))
+        self.task_url = self.entry(grid)
+        self.task_url.grid(row=1, column=1, sticky='ew', ipady=5)
+        self.button(body, 'Generar email', self.generate_change_email).pack(anchor='w', pady=(14, 6))
+        self.change_error = self.label(body, '', role='error', font=FONT_BOLD)
+        self.change_error.pack(anchor='w')
+
+        self.change_out = self.reg(tk.Frame(body), 'surface')
+        self.label(self.change_out, 'Título del email: ', font=FONT_BOLD).pack(anchor='w')
+        self.out_change_subject = self.output(self.change_out, height=1)
+        self.out_change_subject.pack(fill='x', pady=(6, 0))
+        self.label(self.change_out, 'Contenido del email: ', font=FONT_BOLD).pack(anchor='w', pady=(18, 0))
+        self.out_change_body = self.output(self.change_out, height=17)
+        self.out_change_body.pack(fill='x', pady=(6, 0))
+        # El botón Copiar de esta celda copia HTML (con el hipervínculo) + texto plano
+        copy_btn = self.out_change_body.winfo_children()[0].winfo_children()[0]
+        copy_btn.configure(command=lambda: self.copy_change_body(copy_btn))
+        self.change_email = None
+        self.label(self.change_out, "Adjuntar el email de respuesta de Blanca en formato .eml, el correo del Waiver y "
+                                    "el correo de 'RV_RCB Excepción - Requested'",
+                   font=FONT_BOLD, wrap=60).pack(anchor='w', fill='x', pady=(18, 0))
+
+    def generate_change_email(self):
+        code = self.rlse_code.get().strip()
+        try:
+            d = dt.date(int(self.year.get()), int(self.month.get()), int(self.day.get()))
+        except ValueError:
+            d = None
+        problems = []
+        if not code:
+            problems.append('el código de la RLSE (paso 7)')
+        if d is None:
+            problems.append('una fecha de despliegue a PRO válida (paso 3)')
+        if problems:
+            self.change_error.configure(text=f"Falta {' y '.join(problems)}.")
+            self.change_out.pack_forget()
+            return
+        self.change_error.configure(text='')
+        self.set_output(self.out_change_subject,
+                        f'SOLICITUD PARA PRO NORMAL [BANKING] - AQUAPLUS - {code}-{d:%d-%m-%Y}')
+
+        url = self.rlse_url.get().strip()
+        task = self.task_url.get().strip()
+        url = url if url.lower().startswith(('http://', 'https://')) else ''
+        task_link = task if task.lower().startswith(('http://', 'https://')) else ''
+        long_date = f'{WEEKDAYS[d.weekday()]} {d:%d} de {MONTHS[d.month - 1]}'
+
+        # Segmentos (texto, url) -> se usan para la vista, el HTML y el texto plano
+        segs = [
+            ('Buenos días,\n\nSolicitamos que se avance la RLSE ', None), (code, url or None),
+            (' para su subida a PRO por nuestra parte (desde GitHub Actions por el equipo de Aquaplus), '
+             f'para este {long_date}.\n\n'
+             'Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB '
+             'con el ok y el Waiver de vulnerabilidades.\n\n'
+             'La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos '
+             'pase la tarea de estado pending a open dentro de la ventana temporal de la tarea), por este orden:\n\n▪ ', None),
+            (task, task_link or None),
+            (f'\n      • {CHANGE_GROUP}\n\n'
+             'Quedamos a vuestra disposición por si hubiera algún dato o información mal consignados, de acuerdo con el '
+             'último protocolo para la gestión de cambios fijado.\n\nMuchas gracias\nSaludos', None),
+        ]
+        self.show_rich(self.out_change_body, segs)
+
+        a = lambda text, href: f'<a href="{html_escape(href)}">{html_escape(text)}</a>' if href else html_escape(text)
+        html = '\n'.join([
+            '<p>Buenos días,</p>',
+            f'<p>Solicitamos que se avance la RLSE {a(code, url)} para su subida a PRO por nuestra parte (desde GitHub '
+            f'Actions por el equipo de Aquaplus), para este {html_escape(long_date)}.</p>',
+            '<p>Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB '
+            'con el ok y el Waiver de vulnerabilidades.</p>',
+            '<p>La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos '
+            'pase la tarea de estado pending a open dentro de la ventana temporal de la tarea), por este orden:</p>',
+            f'<ul style="list-style-type:square"><li>{a(task, task_link)}<ul style="list-style-type:disc">'
+            f'<li>{html_escape(CHANGE_GROUP)}</li></ul></li></ul>',
+            '<p>Quedamos a vuestra disposición por si hubiera algún dato o información mal consignados, de acuerdo con '
+            'el último protocolo para la gestión de cambios fijado.</p>',
+            '<p>Muchas gracias<br>Saludos</p>',
+        ])
+        text = ''.join(t + (f' ({u})' if u and t != u else '') for t, u in segs)
+        self.change_email = (html, text)
+        self.change_out.pack(fill='x')
+
+    def show_rich(self, frame, segs):
+        t = frame.text
+        t.configure(state='normal')
+        t.delete('1.0', 'end')
+        for i, (text, url) in enumerate(segs):
+            if url:
+                tag = f'link{i}'
+                t.insert('end', text, (tag,))
+                t.tag_configure(tag, foreground=self.c['accent'], underline=True)
+                t.tag_bind(tag, '<Button-1>', lambda e, u=url: webbrowser.open(u))
+                t.tag_bind(tag, '<Enter>', lambda e: t.configure(cursor='hand2'))
+                t.tag_bind(tag, '<Leave>', lambda e: t.configure(cursor=''))
+            else:
+                t.insert('end', text)
+        t.configure(state='disabled')
+
+    def copy_change_body(self, btn):
+        if not self.change_email:
+            return
+        html, text = self.change_email
+        if copy_html_windows(html, text):
+            btn.configure(text='¡Copiado!')
+            self.root.after(1500, lambda: btn.winfo_exists() and btn.configure(text='Copiar'))
+        else:
+            self.copy(text, btn)
 
     # ------------------------------------------------------------ actualizaciones
     def check_update(self):

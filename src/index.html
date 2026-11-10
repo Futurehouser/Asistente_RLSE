@@ -109,6 +109,35 @@
         <p class="hint hint-spaced">Adjunta el Word del plan de pruebas a este email antes de enviárselo a Blanca</p>
       </div>
     </section>
+
+    <section class="step" data-step="8">
+      <div class="step-header"><span class="step-num">8</span><h2>Email a gestión del cambio</h2></div>
+      <div class="row">
+        <label class="label" for="rlseUrl">URL de la RLSE: </label>
+        <input type="text" id="rlseUrl" class="text-input wide" />
+      </div>
+      <div class="row">
+        <label class="label" for="taskUrl">URL de la Task del deploy a PRO: </label>
+        <input type="text" id="taskUrl" class="text-input wide" />
+      </div>
+      <div class="actions">
+        <button id="changeEmailBtn" class="btn">Generar email</button>
+      </div>
+      <p id="changeEmailError" class="error-msg" hidden></p>
+      <div id="changeEmailOut" hidden>
+        <p class="hint">Título del email: </p>
+        <div class="output-wrap output-short">
+          <textarea id="changeSubject" rows="1" readonly></textarea>
+          <button id="copyChangeSubject" class="btn btn-small btn-ghost copy-btn">Copiar</button>
+        </div>
+        <p class="hint hint-spaced">Contenido del email: </p>
+        <div class="output-wrap">
+          <div id="changeBody" class="rich-output"></div>
+          <button id="copyChangeBody" class="btn btn-small btn-ghost copy-btn">Copiar</button>
+        </div>
+        <p class="hint hint-spaced">Adjuntar el email de respuesta de Blanca en formato .eml, el correo del Waiver y el correo de 'RV_RCB Excepción - Requested'</p>
+      </div>
+    </section>
   </main>
 
   <nav class="step-nav">

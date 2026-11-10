@@ -311,6 +311,99 @@
   const copyBody = document.getElementById('copyBody');
   copyBody.addEventListener('click', () => copyText(emailBody.value, copyBody));
 
+  // ---------- Email a gestión del cambio ----------
+  const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+    'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (ch) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+  const rlseUrl = document.getElementById('rlseUrl');
+  const taskUrl = document.getElementById('taskUrl');
+  const changeOut = document.getElementById('changeEmailOut');
+  const changeError = document.getElementById('changeEmailError');
+  const changeSubject = document.getElementById('changeSubject');
+  const changeBody = document.getElementById('changeBody');
+  let changeEmail = { html: '', text: '' };
+
+  function buildChangeEmail(code, url, longDate, task) {
+    const link = /^https?:\/\//i.test(url) ? url : '';
+    const rlseHtml = link ? `<a href="${esc(link)}" target="_blank">${esc(code)}</a>` : esc(code);
+    const taskHtml = /^https?:\/\//i.test(task)
+      ? `<a href="${esc(task)}" target="_blank">${esc(task)}</a>` : esc(task);
+    const html = [
+      '<p>Buenos días,</p>',
+      `<p>Solicitamos que se avance la RLSE ${rlseHtml} para su subida a PRO por nuestra parte (desde GitHub Actions por el equipo de Aquaplus), para este ${esc(longDate)}.</p>`,
+      '<p>Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB con el ok y el Waiver de vulnerabilidades.</p>',
+      '<p>La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos pase la tarea de estado pending a open dentro de la ventana temporal de la tarea), por este orden:</p>',
+      `<ul style="list-style-type:square"><li>${taskHtml}<ul style="list-style-type:disc"><li>&gt; SGT_AP_SCIB_AQUAPLUS N1</li></ul></li></ul>`,
+      '<p>Quedamos a vuestra disposición por si hubiera algún dato o información mal consignados, de acuerdo con el último protocolo para la gestión de cambios fijado.</p>',
+      '<p>Muchas gracias<br>Saludos</p>',
+    ].join('\n');
+    const text = [
+      'Buenos días,',
+      '',
+      `Solicitamos que se avance la RLSE ${code}${link ? ` (${link})` : ''} para su subida a PRO por nuestra parte (desde GitHub Actions por el equipo de Aquaplus), para este ${longDate}.`,
+      '',
+      'Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB con el ok y el Waiver de vulnerabilidades.',
+      '',
+      'La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos pase la tarea de estado pending a open dentro de la ventana temporal de la tarea), por este orden:',
+      '',
+      `▪ ${task}`,
+      '    • > SGT_AP_SCIB_AQUAPLUS N1',
+      '',
+      'Quedamos a vuestra disposición por si hubiera algún dato o información mal consignados, de acuerdo con el último protocolo para la gestión de cambios fijado.',
+      '',
+      'Muchas gracias',
+      'Saludos',
+    ].join('\n');
+    return { html, text };
+  }
+
+  document.getElementById('changeEmailBtn').addEventListener('click', () => {
+    const code = rlseCode.value.trim();
+    const problems = [];
+    if (!code) problems.push('el código de la RLSE (paso 7)');
+    if (!deployDate.value) problems.push('la fecha de despliegue a PRO (paso 3)');
+    if (problems.length) {
+      changeError.textContent = `Falta ${problems.join(' y ')}.`;
+      changeError.hidden = false;
+      changeOut.hidden = true;
+      return;
+    }
+    changeError.hidden = true;
+    const [y, m, d] = deployDate.value.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const longDate = `${WEEKDAYS[date.getDay()]} ${pad(d)} de ${MONTHS[m - 1]}`;
+    changeSubject.value = `SOLICITUD PARA PRO NORMAL [BANKING] - AQUAPLUS - ${code}-${pad(d)}-${pad(m)}-${y}`;
+    changeEmail = buildChangeEmail(code, rlseUrl.value.trim(), longDate, taskUrl.value.trim());
+    changeBody.innerHTML = changeEmail.html;
+    changeOut.hidden = false;
+  });
+
+  const copyChangeSubject = document.getElementById('copyChangeSubject');
+  copyChangeSubject.addEventListener('click', () => copyText(changeSubject.value, copyChangeSubject));
+
+  // El contenido se copia como texto enriquecido (HTML) para conservar el hipervínculo al pegarlo en Outlook
+  const copyChangeBody = document.getElementById('copyChangeBody');
+  copyChangeBody.addEventListener('click', async () => {
+    if (!changeEmail.text) return;
+    try {
+      if (window.api && window.api.copyRich) {
+        await window.api.copyRich(changeEmail.html, changeEmail.text);
+      } else {
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([changeEmail.html], { type: 'text/html' }),
+          'text/plain': new Blob([changeEmail.text], { type: 'text/plain' }),
+        })]);
+      }
+      copyChangeBody.textContent = '¡Copiado!';
+      setTimeout(() => (copyChangeBody.textContent = 'Copiar'), 1500);
+    } catch {
+      copyText(changeEmail.text, copyChangeBody);
+    }
+  });
+
   // ---------- Modo día / noche ----------
   const root = document.documentElement;
   const themeBtn = document.getElementById('themeToggle');
