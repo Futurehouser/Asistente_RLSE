@@ -79,8 +79,15 @@
     'i.e.: Certificate expires on the 13/10/2022, if not implemented by them payments journey will be affected',
   ].join('\n');
 
+  const DEFAULT_HUS = [
+    'Ajustamos el algoritmo de fondo de comercio en loan tape espejo (https://san-scib.atlassian.net/browse/SCIBAQAPLS-19530)',
+    'componentes de planificacion controlM (https://san-scib.atlassian.net/browse/SCIBAQAPLS-19209)',
+    'Cambiar origen de datos de Ratings Externos diarios en ATB espejo (https://san-scib.atlassian.net/browse/SCIBAQAPLS-18160)',
+  ].join('\n');
+
   const input1 = document.getElementById('input1');
   const input2 = document.getElementById('input2');
+  input2.value = DEFAULT_HUS;
   const output = document.getElementById('output');
 
   const output2 = document.getElementById('output2');
@@ -307,14 +314,16 @@
   // ---------- Modo día / noche ----------
   const root = document.documentElement;
   const themeBtn = document.getElementById('themeToggle');
-  function applyTheme(t) {
+  function applyTheme(t, remember) {
     root.dataset.theme = t;
     themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
     themeBtn.title = t === 'dark' ? 'Cambiar a modo día' : 'Cambiar a modo noche';
-    try { localStorage.setItem('theme', t); } catch {}
+    if (remember) {
+      try { localStorage.setItem('themeChoice', t); } catch {}
+    }
   }
-  applyTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
-  themeBtn.addEventListener('click', () => applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
+  applyTheme(root.dataset.theme === 'light' ? 'light' : 'dark', false);
+  themeBtn.addEventListener('click', () => applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark', true));
 
   // ---------- Versión y actualizaciones ----------
   if (window.api) {

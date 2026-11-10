@@ -34,6 +34,12 @@ TEMPLATE_URL = (
     '%26sysparm_record_rows%3D11%26sysparm_view%3Drelease%26sysparm_view_forced%3Dtrue%26sysparm_view_resolved%3Drelease'
 )
 
+DEFAULT_HUS = '\n'.join([
+    'Ajustamos el algoritmo de fondo de comercio en loan tape espejo (https://san-scib.atlassian.net/browse/SCIBAQAPLS-19530)',
+    'componentes de planificacion controlM (https://san-scib.atlassian.net/browse/SCIBAQAPLS-19209)',
+    'Cambiar origen de datos de Ratings Externos diarios en ATB espejo (https://san-scib.atlassian.net/browse/SCIBAQAPLS-18160)',
+])
+
 TEMPLATE_DESCRIPTION = '\n'.join([
     '- High Level & Non-Technical Language Description Summary:',
     '',
@@ -199,7 +205,7 @@ class App:
         self.root = root
         self.version = get_version()
         self.settings = load_settings()
-        self.theme = self.settings.get('theme', 'light')
+        self.theme = self.settings.get('theme', 'dark')  # modo noche por defecto
         self.c = THEMES[self.theme]
         self.styled = []        # (widget, rol) para re-aplicar colores al cambiar de tema
         self.wrap_labels = []   # (label, margen) cuyo wraplength sigue el ancho de la ventana
@@ -522,7 +528,8 @@ class App:
         self.input1 = self.text_input(grid)
         self.input1.grid(row=0, column=1, sticky='ew', pady=(0, 10))
         self.label(grid, 'Lista de HUs: ', font=FONT_BOLD).grid(row=1, column=0, sticky='nw', padx=(0, 12))
-        self.input2 = self.text_input(grid)
+        self.input2 = self.text_input(grid, height=4)
+        self.input2.insert('1.0', DEFAULT_HUS)
         self.input2.grid(row=1, column=1, sticky='ew')
 
         self.button(body, 'Generar descripciones', self.generate_descriptions).pack(anchor='w', pady=(12, 10))
