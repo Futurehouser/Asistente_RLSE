@@ -164,6 +164,17 @@
   const datesIntro = document.getElementById('datesIntro');
   const pad = (n) => String(n).padStart(2, '0');
 
+  // Correo de SHKD: se guarda en este equipo para no tener que reescribirlo
+  const shkdEmail = document.getElementById('shkdEmail');
+  try { shkdEmail.value = localStorage.getItem('shkdEmail') || ''; } catch {}
+  const fillShkd = (date) =>
+    TEMPLATE_SHKD.replace(/\[EMAIL\]/g, () => shkdEmail.value.trim()).replace('[INPUT DATE]', () => date);
+  const shkdOutputs = []; // [textarea, fecha] para refrescar al cambiar el correo
+  shkdEmail.addEventListener('input', () => {
+    try { localStorage.setItem('shkdEmail', shkdEmail.value.trim()); } catch {}
+    shkdOutputs.forEach(([ta, date]) => (ta.value = fillShkd(date)));
+  });
+
   function makeCopyButton(getText) {
     const btn = document.createElement('button');
     btn.className = 'btn btn-small btn-ghost';
@@ -187,6 +198,7 @@
 
   document.getElementById('datesBtn').addEventListener('click', () => {
     datesOut.innerHTML = '';
+    shkdOutputs.length = 0;
     if (!deployDate.value) {
       datesIntro.hidden = true;
       deployDate.focus();
@@ -231,10 +243,11 @@
         left.append(label, group);
         const extras = document.createElement('div');
         extras.className = 'extra-outputs';
-        extras.append(
-          makeTextOutput(TEMPLATE_SHKD.replace('[INPUT DATE]', `${yyyy}-${mm}-${dd}`)),
-          makeTextOutput(TEMPLATE_SHKD.replace('[INPUT DATE]', `${dd}/${mm}/${yyyy}`))
-        );
+        [`${yyyy}-${mm}-${dd}`, `${dd}/${mm}/${yyyy}`].forEach((date) => {
+          const out = makeTextOutput(fillShkd(date));
+          shkdOutputs.push([out.querySelector('textarea'), date]);
+          extras.appendChild(out);
+        });
         row.append(left, extras);
       } else {
         row.append(label, group);
