@@ -117,50 +117,128 @@
   });
 
   // ---------- Fechas de despliegue ----------
-  // [título, días respecto a la fecha de PRO, hora]
+  const TEMPLATE_SHKD = [
+    '- Post Production Implementation Testing (Describe briefly):',
+    'Consulta en control-M de la ejecución automática de los jobs',
+    '',
+    '- SHKD Contacts Detail (MANDATORY to inform Name, Surname and Mobile Phone):',
+    'Technical SHKD: [EMAIL] N/A',
+    'Functional SHKD: [EMAIL]',
+    'Functional SHKD Date:  [INPUT DATE]',
+    'Specify Reason if Functional SHKD Date / Los cambios no se hacen efectivos hasta la mañana siguiente',
+  ].join('\n');
+
+  // title: título; offset: días respecto a la fecha de PRO; time: hora;
+  // note: indicación que se añade al título; shkd: añade las salidas de SHKD;
+  // imagesBefore: imágenes que se muestran justo encima de la fila
   const DATE_PLAN = [
-    ['Fecha de inicio de despliegue a PRE', -2, '13:00:00'],
-    ['Fecha de fin de despliegue a PRE', -2, '23:59:59'],
-    ['Fecha de inicio del despliegue a PRO', 0, '09:00:00'],
-    ['Fecha de fin del despliegue a PRO', 0, '23:59:59'],
-    ['Fecha de inicio de Shakedown Técnico', 1, '09:00:00'],
-    ['Fecha de fin de Shakedown Técnico', 1, '23:59:59'],
-    ['Fecha de inicio de Shakedown Funcional', 2, '09:00:00'],
-    ['Fecha de fin de Shakedown Funcional', 2, '23:59:59'],
-    ['Fecha de inicio del Rollback', 0, '09:30:00'],
-    ['Fecha de fin del Rollback', 0, '23:59:59'],
+    { title: 'Fecha de inicio de despliegue a PRE', offset: -2, time: '13:00:00',
+      note: "(poner esta fecha en la pestaña Schedule, campo 'Preproduction proposed date' y en la tarea de 'Pre-production' también)" },
+    { title: 'Fecha de fin de despliegue a PRE', offset: -2, time: '23:59:59',
+      note: "(poner esta fecha en la tarea de 'Pre-production')" },
+    { title: 'Fecha de inicio del despliegue a PRO', offset: 0, time: '09:00:00',
+      note: "(poner esta fecha en la pestaña Schedule, campo 'Planned start date' y en la tarea de 'Production')" },
+    { title: 'Fecha de fin del despliegue a PRO', offset: 0, time: '23:59:59',
+      note: "(poner esta fecha en la tarea de 'Production')" },
+    { title: 'Fecha de inicio de Shakedown Técnico', offset: 1, time: '09:00:00',
+      note: "(poner esta fecha en la tarea de 'SKD TÉCNICO')" },
+    { title: 'Fecha de fin de Shakedown Técnico', offset: 1, time: '23:59:59',
+      note: "(poner esta fecha en la tarea de 'SKD TÉCNICO')" },
+    { title: 'Fecha de inicio de Shakedown Funcional', offset: 2, time: '09:00:00',
+      note: "(poner esta fecha en la tarea de 'SKD FUNCIONAL' y copia la primera descripción en 'Implementation plan' de la RLSE y copia la segunda descripción en 'Test plan' de la RLSE)",
+      shkd: true },
+    { title: 'Fecha de fin de Shakedown Funcional', offset: 2, time: '23:59:59',
+      note: "(poner esta fecha en la tarea de 'SKD FUNCIONAL)",
+      imagesBefore: [
+        ['img/test-plan.jpg', 'Campo Test plan de la RLSE'],
+        ['img/implementation-plan.jpg', 'Campo Implementation plan de la RLSE'],
+      ] },
+    { title: 'Fecha de inicio del Rollback', offset: 0, time: '09:30:00',
+      note: '(poner esta fecha en ambas tareas de Rollback)' },
+    { title: 'Fecha de fin del Rollback', offset: 0, time: '23:59:59',
+      note: '(poner esta fecha en ambas tareas de Rollback)' },
   ];
 
   const deployDate = document.getElementById('deployDate');
   const datesOut = document.getElementById('datesOut');
+  const datesIntro = document.getElementById('datesIntro');
   const pad = (n) => String(n).padStart(2, '0');
+
+  function makeCopyButton(getText) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-small btn-ghost';
+    btn.textContent = 'Copiar';
+    btn.addEventListener('click', () => copyText(getText(), btn));
+    return btn;
+  }
+
+  function makeTextOutput(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'output-wrap';
+    const ta = document.createElement('textarea');
+    ta.readOnly = true;
+    ta.rows = 8;
+    ta.value = text;
+    const btn = makeCopyButton(() => ta.value);
+    btn.classList.add('copy-btn');
+    wrap.append(ta, btn);
+    return wrap;
+  }
 
   document.getElementById('datesBtn').addEventListener('click', () => {
     datesOut.innerHTML = '';
     if (!deployDate.value) {
+      datesIntro.hidden = true;
       deployDate.focus();
       return;
     }
+    datesIntro.hidden = false;
     const [y, m, d] = deployDate.value.split('-').map(Number);
-    DATE_PLAN.forEach(([title, offset, time]) => {
-      const dt = new Date(y, m - 1, d + offset); // fecha local: gestiona cambios de mes/año
-      const value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${time}`;
+    DATE_PLAN.forEach((item) => {
+      const dt = new Date(y, m - 1, d + item.offset); // fecha local: gestiona cambios de mes/año
+      const yyyy = dt.getFullYear();
+      const mm = pad(dt.getMonth() + 1);
+      const dd = pad(dt.getDate());
+      const value = `${yyyy}-${mm}-${dd} ${item.time}`;
+
+      (item.imagesBefore || []).forEach(([src, alt]) => {
+        const img = document.createElement('img');
+        img.className = 'guide-img';
+        img.src = src;
+        img.alt = alt;
+        datesOut.appendChild(img);
+      });
+
       const row = document.createElement('div');
       row.className = 'row';
       const label = document.createElement('span');
       label.className = 'label';
-      label.textContent = title;
+      label.textContent = `${item.title} ${item.note}`;
       const cell = document.createElement('input');
       cell.className = 'date-cell';
       cell.readOnly = true;
       cell.value = value;
       cell.title = 'Clic para seleccionar';
       cell.addEventListener('focus', () => cell.select());
-      const copy = document.createElement('button');
-      copy.className = 'btn btn-small btn-ghost';
-      copy.textContent = 'Copiar';
-      copy.addEventListener('click', () => copyText(value, copy));
-      row.append(label, cell, copy);
+      const group = document.createElement('div');
+      group.className = 'date-row-item';
+      group.append(cell, makeCopyButton(() => value));
+      if (item.shkd) {
+        // Fecha a la izquierda y las dos descripciones de SHKD a su derecha
+        row.classList.add('row-shkd');
+        const left = document.createElement('div');
+        left.className = 'shkd-left';
+        left.append(label, group);
+        const extras = document.createElement('div');
+        extras.className = 'extra-outputs';
+        extras.append(
+          makeTextOutput(TEMPLATE_SHKD.replace('[INPUT DATE]', `${yyyy}-${mm}-${dd}`)),
+          makeTextOutput(TEMPLATE_SHKD.replace('[INPUT DATE]', `${dd}/${mm}/${yyyy}`))
+        );
+        row.append(left, extras);
+      } else {
+        row.append(label, group);
+      }
       datesOut.appendChild(row);
     });
   });

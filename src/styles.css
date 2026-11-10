@@ -38,7 +38,7 @@ html, body {
 }
 
 .container {
-  max-width: 860px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 32px 20px 120px; /* hueco inferior para la barra fija */
 }
@@ -146,8 +146,24 @@ input[type="date"], .date-cell {
 }
 :root[data-theme="dark"] input[type="date"] { color-scheme: dark; }
 
-.dates-out .row { align-items: center; margin-bottom: 8px; }
+.dates-out .row { align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.dates-out .row .label { flex: 1 1 300px; }
 .dates-out .btn { min-width: 86px; }
+.dates-out .date-row-item { display: flex; gap: 8px; align-items: center; }
+.dates-out .date-row-item .date-cell { flex: 0 0 190px; }
+.dates-out .row-shkd { align-items: flex-start; }
+.dates-out .shkd-left { flex: 0 1 320px; display: flex; flex-direction: column; gap: 8px; }
+.dates-out .shkd-left .label { flex: none; }
+.dates-out .extra-outputs {
+  flex: 1 1 520px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 4px 0 8px;
+}
+.dates-out .extra-outputs .output-wrap { flex: 1 1 320px; }
+.dates-out .extra-outputs textarea { min-height: 170px; font-size: 0.85rem; }
+.dates-out .guide-img { margin: 14px 0; }
 @media (max-width: 700px) { .dates-out .row { flex-direction: row; flex-wrap: wrap; } .dates-out .row .label { flex-basis: 100%; } }
 .dates-out .row .label { padding-top: 0; }
 .date-cell { flex: 0 1 220px; font-family: Consolas, "Courier New", monospace; cursor: pointer; }
