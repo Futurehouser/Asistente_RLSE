@@ -128,6 +128,11 @@
     'Specify Reason if Functional SHKD Date / Los cambios no se hacen efectivos hasta la mañana siguiente',
   ].join('\n');
 
+  const TEMPLATE_IMPLEMENTATION = [
+    '- Implementation Plan including Date, Time, Action and Owner for PRO (Please inform when the Post Implementation Testing is expected):',
+    '[INPUT DATE] - Se resolverá el SHAKEDOWN FUNCIONAL, tras el despliegue a PRO vía GitHub Actions el día anterior.',
+  ].join('\n');
+
   // title: título; offset: días respecto a la fecha de PRO; time: hora;
   // note: indicación que se añade al título; shkd: añade las salidas de SHKD;
   // imagesBefore: imágenes que se muestran justo encima de la fila
@@ -150,8 +155,8 @@
     { title: 'Fecha de fin de Shakedown Funcional', offset: 2, time: '23:59:59',
       note: "(poner esta fecha en la tarea de 'SKD FUNCIONAL)",
       imagesBefore: [
-        ['img/test-plan.jpg', 'Campo Test plan de la RLSE'],
         ['img/implementation-plan.jpg', 'Campo Implementation plan de la RLSE'],
+        ['img/test-plan.jpg', 'Campo Test plan de la RLSE'],
       ] },
     { title: 'Fecha de inicio del Rollback', offset: 0, time: '09:30:00',
       note: '(poner esta fecha en ambas tareas de Rollback)' },
@@ -167,12 +172,12 @@
   // Correo de SHKD: se guarda en este equipo para no tener que reescribirlo
   const shkdEmail = document.getElementById('shkdEmail');
   try { shkdEmail.value = localStorage.getItem('shkdEmail') || ''; } catch {}
-  const fillShkd = (date) =>
-    TEMPLATE_SHKD.replace(/\[EMAIL\]/g, () => shkdEmail.value.trim()).replace('[INPUT DATE]', () => date);
-  const shkdOutputs = []; // [textarea, fecha] para refrescar al cambiar el correo
+  const fillTemplate = (tpl, date) =>
+    tpl.replace(/\[EMAIL\]/g, () => shkdEmail.value.trim()).replace('[INPUT DATE]', () => date);
+  const shkdOutputs = []; // [textarea, plantilla, fecha] para refrescar al cambiar el correo
   shkdEmail.addEventListener('input', () => {
     try { localStorage.setItem('shkdEmail', shkdEmail.value.trim()); } catch {}
-    shkdOutputs.forEach(([ta, date]) => (ta.value = fillShkd(date)));
+    shkdOutputs.forEach(([ta, tpl, date]) => (ta.value = fillTemplate(tpl, date)));
   });
 
   function makeCopyButton(getText) {
@@ -243,9 +248,13 @@
         left.append(label, group);
         const extras = document.createElement('div');
         extras.className = 'extra-outputs';
-        [`${yyyy}-${mm}-${dd}`, `${dd}/${mm}/${yyyy}`].forEach((date) => {
-          const out = makeTextOutput(fillShkd(date));
-          shkdOutputs.push([out.querySelector('textarea'), date]);
+        // 1ª: Implementation plan (yyyy-mm-dd) · 2ª: Test plan (dd/mm/yyyy)
+        [
+          [TEMPLATE_IMPLEMENTATION, `${yyyy}-${mm}-${dd}`],
+          [TEMPLATE_SHKD, `${dd}/${mm}/${yyyy}`],
+        ].forEach(([tpl, date]) => {
+          const out = makeTextOutput(fillTemplate(tpl, date));
+          shkdOutputs.push([out.querySelector('textarea'), tpl, date]);
           extras.appendChild(out);
         });
         row.append(left, extras);
