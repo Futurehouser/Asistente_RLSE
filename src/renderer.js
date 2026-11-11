@@ -174,6 +174,7 @@
   const deployDate = document.getElementById('deployDate');
   const datesOut = document.getElementById('datesOut');
   const datesIntro = document.getElementById('datesIntro');
+  const datesWarning = document.getElementById('datesWarning');
   const pad = (n) => String(n).padStart(2, '0');
 
   // Correo de SHKD: se guarda en este equipo para no tener que reescribirlo
@@ -208,22 +209,43 @@
     return wrap;
   }
 
+  const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+    'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const longDate = (date) => `${WEEKDAYS[date.getDay()]} ${pad(date.getDate())} de ${MONTHS[date.getMonth()]}`;
+  const isWeekend = (date) => date.getDay() === 0 || date.getDay() === 6;
+
+  // Suma/resta días laborables (salta sábados y domingos). Con 0 devuelve la propia fecha.
+  function addBusinessDays(base, days) {
+    const date = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    const step = days < 0 ? -1 : 1;
+    let left = Math.abs(days);
+    while (left > 0) {
+      date.setDate(date.getDate() + step);
+      if (!isWeekend(date)) left--;
+    }
+    return date;
+  }
+
   document.getElementById('datesBtn').addEventListener('click', () => {
     datesOut.innerHTML = '';
     shkdOutputs.length = 0;
     if (!deployDate.value) {
       datesIntro.hidden = true;
+      datesWarning.hidden = true;
       deployDate.focus();
       return;
     }
     datesIntro.hidden = false;
     const [y, m, d] = deployDate.value.split('-').map(Number);
+    const base = new Date(y, m - 1, d);
+    datesWarning.hidden = !isWeekend(base);
     DATE_PLAN.forEach((item) => {
-      const dt = new Date(y, m - 1, d + item.offset); // fecha local: gestiona cambios de mes/año
+      const dt = addBusinessDays(base, item.offset); // fecha local, solo días laborables
       const yyyy = dt.getFullYear();
       const mm = pad(dt.getMonth() + 1);
       const dd = pad(dt.getDate());
-      const value = `${yyyy}-${mm}-${dd} ${item.time}`;
+      const value = `${dd}/${mm}/${yyyy} ${item.time}`;
 
       (item.imagesBefore || []).forEach(([src, alt]) => {
         const img = document.createElement('img');
@@ -255,9 +277,9 @@
         left.append(label, group);
         const extras = document.createElement('div');
         extras.className = 'extra-outputs';
-        // 1ª: Implementation plan (yyyy-mm-dd) · 2ª: Test plan (dd/mm/yyyy)
+        // 1ª: Implementation plan ("Miércoles 07 de Octubre") · 2ª: Test plan (dd/mm/yyyy)
         [
-          [TEMPLATE_IMPLEMENTATION, `${yyyy}-${mm}-${dd}`],
+          [TEMPLATE_IMPLEMENTATION, longDate(dt)],
           [TEMPLATE_SHKD, `${dd}/${mm}/${yyyy}`],
         ].forEach(([tpl, date]) => {
           const out = makeTextOutput(fillTemplate(tpl, date));
@@ -312,25 +334,28 @@
   copyBody.addEventListener('click', () => copyText(emailBody.value, copyBody));
 
   // ---------- Email a gestión del cambio ----------
-  const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
-    'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const esc = (s) => String(s).replace(/[&<>"']/g, (ch) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
   const rlseUrl = document.getElementById('rlseUrl');
   const taskUrl = document.getElementById('taskUrl');
+  const taskCode = document.getElementById('taskCode');
   const changeOut = document.getElementById('changeEmailOut');
   const changeError = document.getElementById('changeEmailError');
   const changeSubject = document.getElementById('changeSubject');
   const changeBody = document.getElementById('changeBody');
   let changeEmail = { html: '', text: '' };
 
-  function buildChangeEmail(code, url, longDate, task) {
-    const link = /^https?:\/\//i.test(url) ? url : '';
+  const isUrl = (s) => /^https?:\/\//i.test(s);
+
+  // taskCode: texto visible de la tarea; taskLink: su URL (hipervínculo)
+  function buildChangeEmail(code, url, prettyDate, taskCode, taskLink) {
+    const link = isUrl(url) ? url : '';
     const rlseHtml = link ? `<a href="${esc(link)}" target="_blank">${esc(code)}</a>` : esc(code);
-    const taskHtml = /^https?:\/\//i.test(task)
-      ? `<a href="${esc(task)}" target="_blank">${esc(task)}</a>` : esc(task);
+    const tLink = isUrl(taskLink) ? taskLink : '';
+    const tText = taskCode || tLink || taskLink;
+    const taskHtml = tLink ? `<a href="${esc(tLink)}" target="_blank">${esc(tText)}</a>` : esc(tText);
+    const longDate = prettyDate;
     const html = [
       '<p>Buenos días,</p>',
       `<p>Solicitamos que se avance la RLSE ${rlseHtml} para su subida a PRO por nuestra parte (desde GitHub Actions por el equipo de Aquaplus), para este ${esc(longDate)}.</p>`,
@@ -349,7 +374,7 @@
       '',
       'La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos pase la tarea de estado pending a open dentro de la ventana temporal de la tarea), por este orden:',
       '',
-      `▪ ${task}`,
+      `▪ ${tText}${tLink && tLink !== tText ? ` (${tLink})` : ''}`,
       '    • > SGT_AP_SCIB_AQUAPLUS N1',
       '',
       'Quedamos a vuestra disposición por si hubiera algún dato o información mal consignados, de acuerdo con el último protocolo para la gestión de cambios fijado.',
@@ -374,9 +399,9 @@
     changeError.hidden = true;
     const [y, m, d] = deployDate.value.split('-').map(Number);
     const date = new Date(y, m - 1, d);
-    const longDate = `${WEEKDAYS[date.getDay()]} ${pad(d)} de ${MONTHS[m - 1]}`;
     changeSubject.value = `SOLICITUD PARA PRO NORMAL [BANKING] - AQUAPLUS - ${code}-${pad(d)}-${pad(m)}-${y}`;
-    changeEmail = buildChangeEmail(code, rlseUrl.value.trim(), longDate, taskUrl.value.trim());
+    changeEmail = buildChangeEmail(code, rlseUrl.value.trim(), longDate(date),
+      taskCode.value.trim(), taskUrl.value.trim());
     changeBody.innerHTML = changeEmail.html;
     changeOut.hidden = false;
   });

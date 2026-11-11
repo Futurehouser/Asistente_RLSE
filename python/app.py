@@ -189,6 +189,23 @@ def is_newer(remote, local):
     return a + [0] * (n - len(a)) > b + [0] * (n - len(b))
 
 
+def long_date(d):
+    """'Miércoles 07 de Octubre'"""
+    return f'{WEEKDAYS[d.weekday()]} {d:%d} de {MONTHS[d.month - 1]}'
+
+
+def add_business_days(base, days):
+    """Suma/resta días laborables (salta sábados y domingos). Con 0 devuelve la propia fecha."""
+    d = base
+    step = dt.timedelta(days=-1 if days < 0 else 1)
+    left = abs(days)
+    while left > 0:
+        d += step
+        if d.weekday() < 5:
+            left -= 1
+    return d
+
+
 def html_escape(s):
     return (str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             .replace('"', '&quot;').replace("'", '&#39;'))
@@ -686,12 +703,13 @@ class App:
             self.dates_intro.pack_forget()
             self.date_error.configure(text='Fecha no válida')
             return
-        self.date_error.configure(text='')
+        self.date_error.configure(
+            text='Atención: la fecha de despliegue a PRO elegida cae en sábado o domingo.' if base.weekday() >= 5 else '')
         self.dates_intro.pack(fill='x', before=self.dates_out, pady=(10, 0))
 
         for title, offset, time, note, extra in DATE_PLAN:
-            d = base + dt.timedelta(days=offset)
-            value = f'{d:%Y-%m-%d} {time}'
+            d = add_business_days(base, offset)  # solo días laborables
+            value = f'{d:%d/%m/%Y} {time}'
             if extra == 'images':
                 self.image(self.dates_out, 'implementation-plan', 'Campo Implementation plan').pack(anchor='w', pady=(14, 4))
                 self.image(self.dates_out, 'test-plan', 'Campo Test plan').pack(anchor='w', pady=(4, 14))
@@ -723,7 +741,7 @@ class App:
             if extra == 'shkd':
                 outs = self.reg(tk.Frame(row), 'surface')
                 outs.pack(side='left', fill='both', expand=True, padx=(14, 0))
-                for tpl, date in ((TEMPLATE_IMPLEMENTATION, f'{d:%Y-%m-%d}'), (TEMPLATE_SHKD, f'{d:%d/%m/%Y}')):
+                for tpl, date in ((TEMPLATE_IMPLEMENTATION, long_date(d)), (TEMPLATE_SHKD, f'{d:%d/%m/%Y}')):
                     out = self.output(outs, height=13)
                     out.text.configure(width=30, font=('Segoe UI', 9))
                     out.pack(side='left', fill='both', expand=True, padx=(0, 8))
@@ -772,9 +790,12 @@ class App:
         self.label(grid, 'URL de la RLSE: ', font=FONT_BOLD).grid(row=0, column=0, sticky='w', padx=(0, 12), pady=(0, 10))
         self.rlse_url = self.entry(grid)
         self.rlse_url.grid(row=0, column=1, sticky='ew', pady=(0, 10), ipady=5)
-        self.label(grid, 'URL de la Task del deploy a PRO: ', font=FONT_BOLD).grid(row=1, column=0, sticky='w', padx=(0, 12))
+        self.label(grid, 'Código de la Task del deploy a PRO: ', font=FONT_BOLD).grid(row=1, column=0, sticky='w', padx=(0, 12), pady=(0, 10))
+        self.task_code = self.entry(grid)
+        self.task_code.grid(row=1, column=1, sticky='ew', pady=(0, 10), ipady=5)
+        self.label(grid, 'URL de la Task del deploy a PRO: ', font=FONT_BOLD).grid(row=2, column=0, sticky='w', padx=(0, 12))
         self.task_url = self.entry(grid)
-        self.task_url.grid(row=1, column=1, sticky='ew', ipady=5)
+        self.task_url.grid(row=2, column=1, sticky='ew', ipady=5)
         self.button(body, 'Generar email', self.generate_change_email).pack(anchor='w', pady=(14, 6))
         self.change_error = self.label(body, '', role='error', font=FONT_BOLD)
         self.change_error.pack(anchor='w')
@@ -814,16 +835,18 @@ class App:
                         f'SOLICITUD PARA PRO NORMAL [BANKING] - AQUAPLUS - {code}-{d:%d-%m-%Y}')
 
         url = self.rlse_url.get().strip()
-        task = self.task_url.get().strip()
+        task_url = self.task_url.get().strip()
         url = url if url.lower().startswith(('http://', 'https://')) else ''
-        task_link = task if task.lower().startswith(('http://', 'https://')) else ''
-        long_date = f'{WEEKDAYS[d.weekday()]} {d:%d} de {MONTHS[d.month - 1]}'
+        task_link = task_url if task_url.lower().startswith(('http://', 'https://')) else ''
+        # Texto visible de la tarea: su código (con hipervínculo a su URL)
+        task = self.task_code.get().strip() or task_link or task_url
+        pretty = long_date(d)
 
         # Segmentos (texto, url) -> se usan para la vista, el HTML y el texto plano
         segs = [
             ('Buenos días,\n\nSolicitamos que se avance la RLSE ', None), (code, url or None),
             (' para su subida a PRO por nuestra parte (desde GitHub Actions por el equipo de Aquaplus), '
-             f'para este {long_date}.\n\n'
+             f'para este {pretty}.\n\n'
              'Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB '
              'con el ok y el Waiver de vulnerabilidades.\n\n'
              'La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos '
@@ -839,7 +862,7 @@ class App:
         html = '\n'.join([
             '<p>Buenos días,</p>',
             f'<p>Solicitamos que se avance la RLSE {a(code, url)} para su subida a PRO por nuestra parte (desde GitHub '
-            f'Actions por el equipo de Aquaplus), para este {html_escape(long_date)}.</p>',
+            f'Actions por el equipo de Aquaplus), para este {html_escape(pretty)}.</p>',
             '<p>Se adjunta tanto la conformidad del Usuario de Negocio (Banco) en la propia RLSE, como el correo del RCB '
             'con el ok y el Waiver de vulnerabilidades.</p>',
             '<p>La tarea a acometer de deploy a PRO es la siguiente junto al grupo encargado de abordarla (una vez se nos '
