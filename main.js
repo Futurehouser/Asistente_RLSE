@@ -48,6 +48,8 @@ ipcMain.handle('copy-rich', (_e, html, text) => {
   return true;
 });
 
+ipcMain.handle('check-update', () => updater.checkForUpdateDetailed());
+
 ipcMain.handle('install-update', async () => {
   return updater.downloadAndInstall((pct) => {
     if (win && !win.isDestroyed()) win.webContents.send('update-progress', pct);

@@ -426,10 +426,46 @@
     const text = document.getElementById('updateText');
     const btn = document.getElementById('updateBtn');
 
-    window.api.onUpdateAvailable(({ version, current }) => {
+    const showUpdateBanner = ({ version, current }) => {
       text.textContent = `Nueva versión disponible: v${version} (actual v${current})`;
+      btn.disabled = false;
       banner.hidden = false;
       document.body.classList.add('has-banner');
+    };
+    window.api.onUpdateAvailable(showUpdateBanner);
+
+    // Botón "Buscar actualizaciones"
+    const checkBtn = document.getElementById('updateCheck');
+    const toast = document.getElementById('toast');
+    let toastTimer;
+    const showToast = (msg) => {
+      toast.textContent = msg;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => (toast.hidden = true), 4000);
+    };
+    checkBtn.addEventListener('click', async () => {
+      if (checkBtn.disabled) return;
+      checkBtn.disabled = true;
+      checkBtn.classList.add('spinning');
+      try {
+        const r = await window.api.checkUpdate();
+        if (r.status === 'update') {
+          showUpdateBanner(r);
+          showToast(`Hay una nueva versión: v${r.version}`);
+        } else if (r.status === 'latest') {
+          showToast(`Ya tienes la última versión (v${r.current}).`);
+        } else if (r.status === 'unsupported') {
+          showToast('Las actualizaciones solo funcionan en el ejecutable Asistente_RLSE.exe.');
+        } else {
+          showToast('No se pudo comprobar si hay actualizaciones. Revisa tu conexión.');
+        }
+      } catch {
+        showToast('No se pudo comprobar si hay actualizaciones.');
+      } finally {
+        checkBtn.classList.remove('spinning');
+        checkBtn.disabled = false;
+      }
     });
 
     window.api.onUpdateProgress((pct) => {

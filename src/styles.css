@@ -239,6 +239,25 @@ input[type="date"], .date-cell, .text-input {
   z-index: 20;
 }
 
+.theme-toggle.update-check { right: 62px; font-size: 1.35rem; line-height: 1; }
+.theme-toggle.update-check.spinning { animation: spin 0.9s linear infinite; cursor: progress; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed;
+  top: 62px;
+  right: 14px;
+  max-width: 340px;
+  padding: 10px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  z-index: 30;
+}
+.toast[hidden] { display: none; }
+
 .update-banner {
   position: fixed;
   top: 0;
@@ -248,7 +267,7 @@ input[type="date"], .date-cell, .text-input {
   justify-content: center;
   align-items: center;
   gap: 14px;
-  padding: 8px 64px 8px 16px;
+  padding: 8px 116px 8px 16px;
   background: var(--accent);
   color: var(--accent-text);
   z-index: 15;

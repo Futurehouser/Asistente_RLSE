@@ -7,6 +7,7 @@ import base64
 import datetime as dt
 import json
 import os
+import queue
 import subprocess
 import sys
 import tempfile
@@ -286,6 +287,8 @@ class App:
         self.build_steps()
         self.apply_theme()
         self.show_step(0, scroll=False)
+        self.ui_queue = queue.Queue()
+        self.poll_queue()
         threading.Thread(target=self.check_update, daemon=True).start()
 
     # ------------------------------------------------------------ estilos
@@ -333,7 +336,9 @@ class App:
                 w.configure(bg=c['surface'], fg=c['text'], activebackground=c['border'],
                             activeforeground=c['text'], highlightbackground=c['border'])
             elif role == 'banner':
-                w.configure(bg=c['accent'], fg=c['accent_text'])
+                w.configure(bg=c['accent'])
+                if not isinstance(w, tk.Frame):
+                    w.configure(fg=c['accent_text'])
             elif role == 'bannerbtn':
                 w.configure(bg=c['accent_text'], fg=c['accent'], activebackground=c['accent_text'],
                             activeforeground=c['accent'])
@@ -464,7 +469,16 @@ class App:
         self.theme_btn = tk.Button(self.top, font=('Segoe UI Symbol', 13), width=3, relief='solid', bd=1,
                                    cursor='hand2', command=self.toggle_theme)
         self.reg(self.theme_btn, 'topbtn')
-        self.theme_btn.pack(side='right', padx=12, pady=8)
+        self.theme_btn.pack(side='right', padx=(6, 12), pady=8)
+        # Botón "Buscar actualizaciones", a la izquierda del de tema
+        self.checking = False
+        self.toast_job = None
+        self.update_btn = tk.Button(self.top, text='↻', font=('Segoe UI Symbol', 13), width=3, relief='solid', bd=1,
+                                    cursor='hand2', command=self.manual_update_check)
+        self.reg(self.update_btn, 'topbtn')
+        self.update_btn.pack(side='right', pady=8)
+        self.toast = tk.Label(self.top, font=FONT, padx=10, pady=4, relief='solid', bd=1)
+        self.reg(self.toast, 'text')
 
         # Barra de navegación fija abajo
         nav = self.reg(tk.Frame(root, highlightthickness=1), 'nav')
@@ -867,26 +881,71 @@ class App:
             self.copy(text, btn)
 
     # ------------------------------------------------------------ actualizaciones
-    def check_update(self):
+    def check_update(self, manual=False):
+        """Comprueba la última release. manual=True (botón) muestra siempre un mensaje con el resultado."""
         # Solo el archivo único publicado en las releases se auto-actualiza
         if not EMBEDDED_IMAGES:
-            return
+            status = 'unsupported'
+        else:
+            try:
+                req = urllib.request.Request(f'https://api.github.com/repos/{REPO}/releases/latest',
+                                             headers={'Accept': 'application/vnd.github+json',
+                                                      'User-Agent': 'Asistente-RLSE-Updater'})
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    rel = json.load(r)
+                asset = next((a for a in rel.get('assets', []) if a['name'] == PY_ASSET), None)
+                if asset and is_newer(rel['tag_name'], self.version):
+                    self.latest = dict(version=rel['tag_name'].lstrip('vV'), url=asset['browser_download_url'])
+                    status = 'update'
+                else:
+                    status = 'latest'
+            except Exception:
+                status = 'error'
+        # Tkinter solo se toca desde el hilo principal: se deja el resultado en la cola
+        if status == 'update':
+            self.ui_queue.put(self.show_banner)
+        if manual:
+            self.ui_queue.put(lambda: self.finish_manual_check(status))
+
+    def poll_queue(self):
+        """Ejecuta en el hilo principal las acciones que dejan los hilos en segundo plano."""
         try:
-            req = urllib.request.Request(f'https://api.github.com/repos/{REPO}/releases/latest',
-                                         headers={'Accept': 'application/vnd.github+json',
-                                                  'User-Agent': 'Asistente-RLSE-Updater'})
-            with urllib.request.urlopen(req, timeout=10) as r:
-                rel = json.load(r)
-            asset = next((a for a in rel.get('assets', []) if a['name'] == PY_ASSET), None)
-            if asset and is_newer(rel['tag_name'], self.version):
-                self.latest = dict(version=rel['tag_name'].lstrip('vV'), url=asset['browser_download_url'])
-                self.root.after(0, self.show_banner)
-        except Exception:
+            while True:
+                self.ui_queue.get_nowait()()
+        except queue.Empty:
             pass
+        self.root.after(150, self.poll_queue)
+
+    def manual_update_check(self):
+        if self.checking:
+            return
+        self.checking = True
+        self.update_btn.configure(text='…', cursor='watch')
+        threading.Thread(target=self.check_update, args=(True,), daemon=True).start()
+
+    def finish_manual_check(self, status):
+        self.checking = False
+        self.update_btn.configure(text='↻', cursor='hand2')
+        messages = {
+            'update': f"Hay una nueva versión: v{self.latest['version']}" if self.latest else '',
+            'latest': f'Ya tienes la última versión (v{self.version}).',
+            'unsupported': 'Las actualizaciones solo funcionan en el archivo publicado Asistente_RLSE.py.',
+            'error': 'No se pudo comprobar si hay actualizaciones. Revisa tu conexión.',
+        }
+        self.show_toast(messages[status])
+
+    def show_toast(self, msg):
+        self.toast.configure(text=msg)
+        self.toast.pack(side='right', padx=(0, 4), pady=8)
+        if self.toast_job:
+            self.root.after_cancel(self.toast_job)
+        self.toast_job = self.root.after(4000, self.toast.pack_forget)
 
     def show_banner(self):
         self.banner_text.configure(text=f"Nueva versión disponible: v{self.latest['version']} (actual v{self.version})")
-        self.banner.pack(side='left', fill='x', expand=True)
+        self.banner_btn.configure(state='normal')
+        if not self.banner.winfo_ismapped():
+            self.banner.pack(side='left', fill='x', expand=True)
 
     def install_update(self):
         if not self.latest:
@@ -905,11 +964,11 @@ class App:
             with os.fdopen(fd, 'wb') as f:
                 f.write(data)
             os.replace(tmp, target)
-            self.root.after(0, lambda: self._restart(target))
+            self.ui_queue.put(lambda: self._restart(target))
         except Exception as exc:
             msg = f'Error al actualizar: {exc}'
-            self.root.after(0, lambda: (self.banner_text.configure(text=msg),
-                                        self.banner_btn.configure(state='normal')))
+            self.ui_queue.put(lambda: (self.banner_text.configure(text=msg),
+                                       self.banner_btn.configure(state='normal')))
 
     def _restart(self, target):
         self.banner_text.configure(text='Reiniciando…')

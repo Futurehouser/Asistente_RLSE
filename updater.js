@@ -29,22 +29,31 @@ function isNewer(remote, local) {
   return false;
 }
 
-async function checkForUpdate() {
+// Devuelve { status, version?, current }:
+//   'update' (hay versión nueva), 'latest' (ya es la última),
+//   'unsupported' (no es el .exe portable) o 'error' (sin conexión, etc.)
+async function checkForUpdateDetailed() {
+  const current = app.getVersion();
   // Solo tiene sentido en el ejecutable portable empaquetado
-  if (!app.isPackaged || !process.env.PORTABLE_EXECUTABLE_FILE) return null;
+  if (!app.isPackaged || !process.env.PORTABLE_EXECUTABLE_FILE) return { status: 'unsupported', current };
   try {
     const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
       headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Asistente-RLSE-Updater' },
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { status: 'error', current, error: `HTTP ${res.status}` };
     const rel = await res.json();
     const asset = (rel.assets || []).find((a) => a.name === ASSET_NAME);
-    if (!asset || !isNewer(rel.tag_name, app.getVersion())) return null;
+    if (!asset || !isNewer(rel.tag_name, current)) return { status: 'latest', current };
     latest = { version: rel.tag_name.replace(/^v/i, ''), url: asset.browser_download_url, size: asset.size };
-    return { version: latest.version, current: app.getVersion() };
-  } catch {
-    return null;
+    return { status: 'update', version: latest.version, current };
+  } catch (err) {
+    return { status: 'error', current, error: String(err.message || err) };
   }
+}
+
+async function checkForUpdate() {
+  const r = await checkForUpdateDetailed();
+  return r.status === 'update' ? { version: r.version, current: r.current } : null;
 }
 
 async function downloadAndInstall(onProgress) {
@@ -94,4 +103,4 @@ async function downloadAndInstall(onProgress) {
   }
 }
 
-module.exports = { checkForUpdate, downloadAndInstall, isNewer };
+module.exports = { checkForUpdate, checkForUpdateDetailed, downloadAndInstall, isNewer };
