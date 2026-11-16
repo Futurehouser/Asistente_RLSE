@@ -546,7 +546,8 @@ class App:
             return
         self.canvas.yview_scroll(int(-event.delta / 40), 'units')
 
-    def new_step(self, number, title):
+    def new_step(self, title):
+        number = len(self.steps) + 1  # numeración automática según el orden de creación
         frame = tk.Frame(self.content, highlightthickness=1, bd=0)
         self.reg(frame, 'surface')
         frame.pack(fill='x', pady=10, padx=6)
@@ -588,15 +589,16 @@ class App:
         self.label(self.content, 'Asistente deploy RLSE Aquaplus', role='title', font=FONT_TITLE,
                    anchor='center').pack(pady=(10, 22), fill='x')
         self.build_step1()
+        self.build_step_initial_changes()
         self.build_step2()
         self.build_step3()
-        self.build_text_step(4, 'GitHub: PR a develop',
+        self.build_text_step('GitHub: PR a develop',
                              "Mover todos los cambios a la rama 'development' y una vez estén todos ahí, "
                              "hacer una Pull Request hacia la rama 'develop'.")
-        self.build_text_step(5, 'GitHub: PR a main',
+        self.build_text_step('GitHub: PR a main',
                              "Después se hace otra Pull Request desde la rama 'develop' a la rama 'main' "
                              "(Va a requerir aprobación de un tercero).")
-        self.build_text_step(6, 'GitHub: Cierre de versión',
+        self.build_text_step('GitHub: Cierre de versión',
                              "Finalmente cerramos versión, usando el workflow de GitHub actions llamado "
                              "'Release workflow' y seleccionar la rama 'main'.")
         self.build_step7()
@@ -604,7 +606,7 @@ class App:
         self.reg(tk.Frame(self.content, height=30), 'bg').pack()
 
     def build_step1(self):
-        body = self.new_step(1, 'Clonar plantilla')
+        body = self.new_step('Clonar plantilla')
         row = self.reg(tk.Frame(body), 'surface')
         row.pack(fill='x', pady=(0, 10))
         self.label(row, 'Clona esta RLSE: ', font=FONT_BOLD).pack(side='left')
@@ -613,8 +615,13 @@ class App:
         link.bind('<Button-1>', lambda e: webbrowser.open(TEMPLATE_URL))
         self.image(body, 'clone-release', 'Botón Clone Release en ServiceNow').pack(anchor='w')
 
+    def build_step_initial_changes(self):
+        body = self.new_step('Cambios iniciales de la RLSE')
+        self.label(body, 'Cambiar Risk, Impact y Categorization a LOW: ', font=FONT_BOLD).pack(anchor='w')
+        self.image(body, 'initial-changes', 'Campos Priority, Risk, Impact y Categorization').pack(anchor='w', pady=8)
+
     def build_step2(self):
-        body = self.new_step(2, 'Descripción de la RLSE')
+        body = self.new_step('Descripción de la RLSE')
         grid = self.reg(tk.Frame(body), 'surface')
         grid.pack(fill='x')
         grid.columnconfigure(1, weight=1)
@@ -646,7 +653,7 @@ class App:
         self.set_output(self.out_justification, fill(TEMPLATE_JUSTIFICATION))
 
     def build_step3(self):
-        body = self.new_step(3, 'Fechas de despliegue')
+        body = self.new_step('Fechas de despliegue')
         self.label(body, 'Correo del responsable de SHKD (Technical y Functional SHKD):', font=FONT_BOLD).pack(anchor='w')
         self.email_var = tk.StringVar(value=self.settings.get('shkdEmail', ''))
         email = self.entry(body, width=46)
@@ -749,12 +756,12 @@ class App:
                     self.shkd_outputs.append((out, tpl, date))
         self.refresh_wrap()
 
-    def build_text_step(self, number, title, text):
-        body = self.new_step(number, title)
+    def build_text_step(self, title, text):
+        body = self.new_step(title)
         self.label(body, text, wrap=80).pack(anchor='w', fill='x')
 
     def build_step7(self):
-        body = self.new_step(7, 'Email a Blanca')
+        body = self.new_step('Email a Blanca')
         self.label(body, 'Código de la RLSE', font=FONT_BOLD).pack(anchor='w')
         row = self.reg(tk.Frame(body), 'surface')
         row.pack(anchor='w', pady=(6, 10))
@@ -783,7 +790,7 @@ class App:
         self.email_out.pack(fill='x')
 
     def build_step8(self):
-        body = self.new_step(8, 'Email a gestión del cambio')
+        body = self.new_step('Email a gestión del cambio')
         grid = self.reg(tk.Frame(body), 'surface')
         grid.pack(fill='x')
         grid.columnconfigure(1, weight=1)
@@ -823,9 +830,9 @@ class App:
             d = None
         problems = []
         if not code:
-            problems.append('el código de la RLSE (paso 7)')
+            problems.append('el código de la RLSE (paso 8)')
         if d is None:
-            problems.append('una fecha de despliegue a PRO válida (paso 3)')
+            problems.append('una fecha de despliegue a PRO válida (paso 4)')
         if problems:
             self.change_error.configure(text=f"Falta {' y '.join(problems)}.")
             self.change_out.pack_forget()

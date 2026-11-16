@@ -31,7 +31,13 @@
     </section>
 
     <section class="step" data-step="2">
-      <div class="step-header"><span class="step-num">2</span><h2>Descripción de la RLSE</h2></div>
+      <div class="step-header"><span class="step-num">2</span><h2>Cambios iniciales de la RLSE</h2></div>
+      <p class="hint">Cambiar Risk, Impact y Categorization a LOW: </p>
+      <img class="guide-img" src="img/initial-changes.jpg" alt="Campos Priority, Risk, Impact y Categorization de la RLSE" />
+    </section>
+
+    <section class="step" data-step="3">
+      <div class="step-header"><span class="step-num">3</span><h2>Descripción de la RLSE</h2></div>
       <div class="row">
         <label class="label" for="input1">Descripción resumida de alto nivel de la RLSE: </label>
         <textarea id="input1" rows="3"></textarea>
@@ -57,8 +63,8 @@
       </div>
     </section>
 
-    <section class="step" data-step="3">
-      <div class="step-header"><span class="step-num">3</span><h2>Fechas de despliegue</h2></div>
+    <section class="step" data-step="4">
+      <div class="step-header"><span class="step-num">4</span><h2>Fechas de despliegue</h2></div>
       <label class="block-label" for="shkdEmail">Correo del responsable de SHKD (Technical y Functional SHKD):</label>
       <div class="date-row">
         <input type="email" id="shkdEmail" class="text-input" placeholder="nombre.apellido@empresa.com" />
@@ -76,23 +82,23 @@
       <div id="datesOut" class="dates-out"></div>
     </section>
 
-    <section class="step" data-step="4">
-      <div class="step-header"><span class="step-num">4</span><h2>GitHub: PR a develop</h2></div>
+    <section class="step" data-step="5">
+      <div class="step-header"><span class="step-num">5</span><h2>GitHub: PR a develop</h2></div>
       <p class="step-text">Mover todos los cambios a la rama 'development' y una vez estén todos ahí, hacer una Pull Request hacia la rama 'develop'.</p>
     </section>
 
-    <section class="step" data-step="5">
-      <div class="step-header"><span class="step-num">5</span><h2>GitHub: PR a main</h2></div>
+    <section class="step" data-step="6">
+      <div class="step-header"><span class="step-num">6</span><h2>GitHub: PR a main</h2></div>
       <p class="step-text">Después se hace otra Pull Request desde la rama 'develop' a la rama 'main' (Va a requerir aprobación de un tercero).</p>
     </section>
 
-    <section class="step" data-step="6">
-      <div class="step-header"><span class="step-num">6</span><h2>GitHub: Cierre de versión</h2></div>
+    <section class="step" data-step="7">
+      <div class="step-header"><span class="step-num">7</span><h2>GitHub: Cierre de versión</h2></div>
       <p class="step-text">Finalmente cerramos versión, usando el workflow de GitHub actions llamado 'Release workflow' y seleccionar la rama 'main'.</p>
     </section>
 
-    <section class="step" data-step="7">
-      <div class="step-header"><span class="step-num">7</span><h2>Email a Blanca</h2></div>
+    <section class="step" data-step="8">
+      <div class="step-header"><span class="step-num">8</span><h2>Email a Blanca</h2></div>
       <label class="block-label" for="rlseCode">Código de la RLSE</label>
       <div class="date-row">
         <input type="text" id="rlseCode" class="text-input" placeholder="RLSE1234567" />
@@ -113,8 +119,8 @@
       </div>
     </section>
 
-    <section class="step" data-step="8">
-      <div class="step-header"><span class="step-num">8</span><h2>Email a gestión del cambio</h2></div>
+    <section class="step" data-step="9">
+      <div class="step-header"><span class="step-num">9</span><h2>Email a gestión del cambio</h2></div>
       <div class="row">
         <label class="label" for="rlseUrl">URL de la RLSE: </label>
         <input type="text" id="rlseUrl" class="text-input wide" />

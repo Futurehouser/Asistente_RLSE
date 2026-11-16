@@ -388,8 +388,8 @@
   document.getElementById('changeEmailBtn').addEventListener('click', () => {
     const code = rlseCode.value.trim();
     const problems = [];
-    if (!code) problems.push('el código de la RLSE (paso 7)');
-    if (!deployDate.value) problems.push('la fecha de despliegue a PRO (paso 3)');
+    if (!code) problems.push('el código de la RLSE (paso 8)');
+    if (!deployDate.value) problems.push('la fecha de despliegue a PRO (paso 4)');
     if (problems.length) {
       changeError.textContent = `Falta ${problems.join(' y ')}.`;
       changeError.hidden = false;

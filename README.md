@@ -16,7 +16,7 @@ Descarga el archivo que prefieras de la [última release](https://github.com/Fut
 
 ## Funciones
 
-- 7 pasos resaltados con navegación **Paso previo / Paso siguiente** (barra fija abajo).
+- 9 pasos resaltados con navegación **Paso previo / Paso siguiente** (barra fija abajo).
 - Generador de las descripciones *Description* y *Justification* de la RLSE.
 - Generador de las fechas de despliegue (PRE, PRO, Shakedowns y Rollback) con sus indicaciones, y de los textos de *Implementation plan* y *Test plan*.
 - Generador del email de conformidad a Blanca.
